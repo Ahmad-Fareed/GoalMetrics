@@ -41,7 +41,8 @@ def setup_database():
             country VARCHAR(100),
             neutral_venue BOOLEAN,
             INDEX idx_home_team (home_team),
-            INDEX idx_away_team (away_team)
+            INDEX idx_away_team (away_team),
+            UNIQUE KEY unique_match (match_date, home_team, away_team)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         """
         cursor.execute(table_query)
@@ -65,7 +66,7 @@ def ingest_csv_data(connection, cursor, csv_filename):
     try:
         # Parameterized query to safely prevent SQL Injection attacks
         insert_query = """
-        INSERT INTO matches (match_date, home_team, away_team, home_score, away_score, tournament, city, country, neutral_venue)
+        INSERT IGNORE INTO matches (match_date, home_team, away_team, home_score, away_score, tournament, city, country, neutral_venue)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         

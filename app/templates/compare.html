@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Compare Teams</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 50px; max-width: 600px; margin: 0 auto; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        #result-box { margin-top: 20px; padding: 15px; border: 1px solid #ccc; display: none; background: #f9f9f9; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to Home</a>
+    <h2>Head-to-Head Comparison</h2>
+    
+    <div>
+        <label>Team 1:</label>
+        <input type="text" id="team1" placeholder="e.g., Brazil">
+        
+        <label>Team 2:</label>
+        <input type="text" id="team2" placeholder="e.g., Argentina">
+        
+        <button onclick="fetchComparison()">Get Stats</button>
+    </div>
+
+    <div id="result-box">
+        <h3 id="matchup-title"></h3>
+        <p>Total Matches: <strong id="total-matches"></strong></p>
+        <p><span id="t1-name"></span> Wins: <strong id="t1-wins"></strong></p>
+        <p><span id="t2-name"></span> Wins: <strong id="t2-wins"></strong></p>
+        <p>Draws: <strong id="draws"></strong></p>
+    </div>
+
+    <script>
+        // The AJAX Fetch API Logic
+        async function fetchComparison() {
+            const team1 = document.getElementById('team1').value;
+            const team2 = document.getElementById('team2').value;
+            const resultBox = document.getElementById('result-box');
+
+            if (!team1 || !team2) {
+                alert("Please enter both teams.");
+                return;
+            }
+
+            try {
+                // Call the API endpoint we built in Phase 3
+                const response = await fetch(`/api/compare?team1=${team1}&team2=${team2}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert("Error: " + (data.error || "Something went wrong"));
+                    return;
+                }
+
+                // Populate the HTML DOM with the JSON data
+                document.getElementById('matchup-title').innerText = `${data.team1} vs ${data.team2}`;
+                document.getElementById('total-matches').innerText = data.total_matches;
+                document.getElementById('t1-name').innerText = data.team1;
+                document.getElementById('t1-wins').innerText = data.team1_wins;
+                document.getElementById('t2-name').innerText = data.team2;
+                document.getElementById('t2-wins').innerText = data.team2_wins;
+                document.getElementById('draws').innerText = data.draws;
+
+                // Make the result box visible
+                resultBox.style.display = "block";
+
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert("Failed to connect to the server.");
+            }
+        }
+    </script>
+</body>
+</html>
