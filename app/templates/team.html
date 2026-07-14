@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Team Stats</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 50px; max-width: 600px; margin: 0 auto; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        #result-box { margin-top: 20px; padding: 15px; border: 1px solid #ccc; display: none; background: #f9f9f9; }
+        .nav-links { margin-bottom: 20px; }
+        .nav-links a { display: inline-block; margin-right: 15px; padding: 10px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .nav-links a:hover { background: #0056b3; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/compare">Compare Teams</a>
+    </div>
+    
+    <a href="/" class="back-link">← Back to Home</a>
+    <h2>Team Statistics (All Tournaments)</h2>
+    
+    <div>
+        <label>Team Name:</label>
+        <input type="text" id="team" placeholder="e.g., Brazil">
+        
+        <button onclick="fetchTeamStats()">Get Stats</button>
+    </div>
+
+    <div id="result-box">
+        <h3 id="team-title"></h3>
+        <p>Total Matches: <strong id="total-matches"></strong></p>
+        <p>Wins: <strong id="wins"></strong></p>
+        <p>Losses: <strong id="losses"></strong></p>
+        <p>Draws: <strong id="draws"></strong></p>
+        <p>Win Rate: <strong id="win-rate"></strong>%</p>
+
+        <hr>
+        <h4>Tournament-Wise Breakdown</h4>
+        <table id="tournament-table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr style="background: #f0f0f0; border-bottom: 2px solid #ccc;">
+                    <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Tournament</th>
+                    <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Matches</th>
+                    <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Wins</th>
+                    <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Losses</th>
+                    <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Draws</th>
+                    <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Win Rate</th>
+                </tr>
+            </thead>
+            <tbody id="tournament-body">
+                <!-- Tournament rows will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // The AJAX Fetch API Logic
+        async function fetchTeamStats() {
+            const team = document.getElementById('team').value;
+            const resultBox = document.getElementById('result-box');
+
+            if (!team) {
+                alert("Please enter a team name.");
+                return;
+            }
+
+            try {
+                // Call the API endpoint for team statistics
+                const response = await fetch(`/api/team/all-tournaments?team=${team}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert("Error: " + (data.error || "Something went wrong"));
+                    return;
+                }
+
+                // Populate the HTML DOM with the JSON data
+                document.getElementById('team-title').innerText = `${data.team} Statistics`;
+                document.getElementById('total-matches').innerText = data.overall_stats.total_matches;
+                document.getElementById('wins').innerText = data.overall_stats.total_wins;
+                document.getElementById('losses').innerText = data.overall_stats.total_losses;
+                document.getElementById('draws').innerText = data.overall_stats.total_draws;
+                document.getElementById('win-rate').innerText = data.overall_stats.overall_win_rate.toFixed(2);
+
+                // Populate tournament-wise breakdown table
+                const tournamentBody = document.getElementById('tournament-body');
+                tournamentBody.innerHTML = ''; // Clear existing rows
+                
+                data.tournaments.forEach(tournament => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid #ddd';
+                    row.innerHTML = `
+                        <td style="padding: 10px; border: 1px solid #ddd;">${tournament.tournament}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${tournament.total_matches}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${tournament.wins}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${tournament.losses}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${tournament.draws}</td>
+                        <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${tournament.win_rate_percentage.toFixed(2)}%</td>
+                    `;
+                    tournamentBody.appendChild(row);
+                });
+
+                // Make the result box visible
+                resultBox.style.display = "block";
+
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert("Failed to connect to the server.");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -10,6 +10,9 @@ from app.routes.compare import compare_bp
 #. IMPORT the new views blueprint
 from app.routes.views import views_bp
 
+# IMPORT the team blueprint
+from app.routes.team import team_bp
+
 def create_app(config_name='development'):
     """The Application Factory pattern to initialize the Flask server core."""
     app = Flask(__name__)
@@ -23,7 +26,7 @@ def create_app(config_name='development'):
     #. REGISTER the blueprint with the Flask application
     app.register_blueprint(compare_bp)
     app.register_blueprint(views_bp)
-    
+    app.register_blueprint(team_bp)
     # Temporary Base Health-Check Route
     @app.route('/api/health', methods=['GET'])
     def health_check():

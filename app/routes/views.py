@@ -12,3 +12,8 @@ def home():
 def compare_page():
     """Serves the compare.html page."""
     return render_template('compare.html')
+
+@views_bp.route('/team')
+def team_page():
+    """Serves the team.html page."""
+    return render_template('team.html')
