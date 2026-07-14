@@ -1,37 +1,62 @@
+"""Database connection pool management with context-manager support."""
+
+import logging
+from contextlib import contextmanager
+
 import mysql.connector
 from mysql.connector import pooling, Error
-from flask import current_app
 
-# We define this as a global variable so it persists across requests
-mysql_pool = None
+logger = logging.getLogger(__name__)
+
+# Module-level pool reference, initialised once at app startup
+_pool: pooling.MySQLConnectionPool | None = None
+
 
 def init_db_pool(app):
-    """Initializes the MySQL connection pool when the Flask app starts."""
-    global mysql_pool
+    """Create a MySQL connection pool using Flask app config values."""
+    global _pool
     try:
-        # Create a pool of 5 ready-to-use connections.
-        mysql_pool = mysql.connector.pooling.MySQLConnectionPool(
+        _pool = pooling.MySQLConnectionPool(
             pool_name="goal_metrics_pool",
-            pool_size=5,  # 5 connections are held open in memory
+            pool_size=5,
             pool_reset_session=True,
-            host=app.config['DB_HOST'],
-            user=app.config['DB_USER'],
-            password=app.config['DB_PASSWORD'],
-            database=app.config['DB_NAME']
+            host=app.config["DB_HOST"],
+            user=app.config["DB_USER"],
+            password=app.config["DB_PASSWORD"],
+            database=app.config["DB_NAME"],
         )
-        print("✅ MySQL Connection Pool successfully initialized.")
-    except Error as e:
-        print(f"❌ Failed to initialize MySQL Pool: {e}")
+        logger.info("MySQL connection pool initialised successfully.")
+    except Error as exc:
+        logger.critical("Failed to initialise MySQL pool: %s", exc)
+
 
 def get_db_connection():
-    """Fetches a connection from the pool for a specific API route to use."""
-    global mysql_pool
-    if mysql_pool is None:
-        raise Exception("Database pool is not initialized.")
-    
+    """Return a raw connection from the pool (caller must close it)."""
+    if _pool is None:
+        raise RuntimeError("Database pool has not been initialised.")
     try:
-        # Borrow a connection from the pool
-        return mysql_pool.get_connection()
-    except Error as e:
-        print(f"Database connection error: {e}")
+        return _pool.get_connection()
+    except Error as exc:
+        logger.error("Could not obtain database connection: %s", exc)
         return None
+
+
+@contextmanager
+def get_db():
+    """Context manager that yields *(connection, cursor)* and guarantees cleanup.
+
+    Usage::
+
+        with get_db() as (conn, cursor):
+            cursor.execute("SELECT ...")
+            rows = cursor.fetchall()
+    """
+    conn = get_db_connection()
+    if conn is None:
+        raise RuntimeError("Database connection could not be established.")
+    cursor = conn.cursor(dictionary=True)
+    try:
+        yield conn, cursor
+    finally:
+        cursor.close()
+        conn.close()

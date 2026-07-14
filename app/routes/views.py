@@ -1,24 +1,29 @@
+"""View routes that serve Jinja2 HTML templates."""
+
 from flask import Blueprint, render_template
 
-# Create a new Blueprint for frontend views
-views_bp = Blueprint('views', __name__)
+views_bp = Blueprint("views", __name__)
 
-@views_bp.route('/')
+
+@views_bp.route("/")
 def home():
-    """Serves the main index.html page."""
-    return render_template('index.html')
+    """Render the landing page."""
+    return render_template("index.html")
 
-@views_bp.route('/compare')
+
+@views_bp.route("/compare")
 def compare_page():
-    """Serves the compare.html page."""
-    return render_template('compare.html')
+    """Render the head-to-head comparison page."""
+    return render_template("compare.html")
 
-@views_bp.route('/team')
+
+@views_bp.route("/team")
 def team_page():
-    """Serves the team.html page."""
-    return render_template('team.html')
+    """Render the team statistics page."""
+    return render_template("team.html")
 
-@views_bp.route('/player')
+
+@views_bp.route("/player")
 def player_page():
-    """Serves the player.html page."""
-    return render_template('player.html')
+    """Render the player career statistics page."""
+    return render_template("player.html")

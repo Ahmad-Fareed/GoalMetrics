@@ -1,116 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Player Stats</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 50px; max-width: 600px; margin: 0 auto; }
-        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
-        #result-box { margin-top: 20px; padding: 15px; border: 1px solid #ccc; display: none; background: #f9f9f9; }
-        .nav-links { margin-bottom: 20px; }
-        .nav-links a { display: inline-block; margin-right: 15px; padding: 10px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; }
-        .nav-links a:hover { background: #0056b3; }
-        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #f0f0f0; border-bottom: 2px solid #ccc; padding: 10px; text-align: left; }
-        td { padding: 10px; border: 1px solid #ddd; }
-        tr:hover { background: #f5f5f5; }
-    </style>
-</head>
-<body>
-    <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/compare">Compare</a>
-        <a href="/team">Team Stats</a>
+{% extends "base.html" %}
+
+{% block title %}Player Stats | GoalMetrics{% endblock %}
+{% block nav_player %}navbar__link--active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">🌟 Player Career Statistics</h1>
+    <p class="page-header__subtitle">Search for any international goalscorer and explore their career numbers.</p>
+</div>
+
+<div class="glass-card" id="player-form-card">
+    <div class="form-group">
+        <label class="form-label" for="player">Player Name</label>
+        <input class="form-input" type="text" id="player" placeholder="e.g., Cristiano Ronaldo">
     </div>
-    
-    <a href="/" class="back-link">← Back to Home</a>
-    <h2>Player Career Statistics</h2>
-    
-    <div>
-        <label>Player Name:</label>
-        <input type="text" id="player" placeholder="e.g., Cristiano Ronaldo">
-        
-        <button onclick="fetchPlayerStats()">Get Stats</button>
+    <button class="btn btn--primary" id="btn-player" onclick="fetchPlayerStats()">Get Stats</button>
+
+    <div class="spinner" id="spinner"></div>
+
+    <!-- Results -->
+    <div class="result-container" id="result-box">
+        <hr class="section-divider">
+
+        <h2 class="section-title" id="player-title"></h2>
+
+        <div class="stat-row">
+            <div class="stat-card">
+                <div class="stat-card__value stat-card__value--accent" id="total-goals">0</div>
+                <div class="stat-card__label">Total Goals</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value stat-card__value--emerald" id="non-penalty-goals">0</div>
+                <div class="stat-card__label">Non-Penalty</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value stat-card__value--amber" id="penalty-goals">0</div>
+                <div class="stat-card__label">Penalties</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value stat-card__value--rose" id="own-goals">0</div>
+                <div class="stat-card__label">Own Goals</div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+        <h3 class="section-title">National Teams Breakdown</h3>
+
+        <div class="data-table-wrapper">
+            <table class="data-table" id="teams-table">
+                <thead>
+                    <tr>
+                        <th>National Team</th>
+                        <th>Total Goals</th>
+                        <th>Penalties</th>
+                        <th>Own Goals</th>
+                    </tr>
+                </thead>
+                <tbody id="teams-body"></tbody>
+            </table>
+        </div>
     </div>
+</div>
+{% endblock %}
 
-    <div id="result-box">
-        <h3 id="player-title"></h3>
-        
-        <h4>Career Overall Stats</h4>
-        <p>Total Career Goals: <strong id="total-goals"></strong></p>
-        <p>Penalty Goals: <strong id="penalty-goals"></strong></p>
-        <p>Non-Penalty Goals: <strong id="non-penalty-goals"></strong></p>
-        <p>Own Goals: <strong id="own-goals"></strong></p>
+{% block scripts %}
+<script>
+    async function fetchPlayerStats() {
+        const player = document.getElementById('player').value.trim();
+        const spinner = document.getElementById('spinner');
+        const resultBox = document.getElementById('result-box');
 
-        <hr>
-        <h4>National Teams Breakdown</h4>
-        <table id="teams-table">
-            <thead>
-                <tr>
-                    <th>National Team</th>
-                    <th style="text-align: center;">Total Goals</th>
-                    <th style="text-align: center;">Penalties</th>
-                    <th style="text-align: center;">Own Goals</th>
-                </tr>
-            </thead>
-            <tbody id="teams-body">
-                <!-- Team rows will be inserted here by JavaScript -->
-            </tbody>
-        </table>
-    </div>
+        if (!player) { showToast('Please enter a player name.'); return; }
 
-    <script>
-        // The AJAX Fetch API Logic
-        async function fetchPlayerStats() {
-            const player = document.getElementById('player').value;
-            const resultBox = document.getElementById('result-box');
+        spinner.classList.add('active');
+        resultBox.classList.remove('visible');
 
-            if (!player) {
-                alert("Please enter a player name.");
-                return;
-            }
+        try {
+            const res = await fetch(`/api/player/stats?name=${encodeURIComponent(player)}`);
+            const data = await res.json();
 
-            try {
-                // Call the API endpoint for player statistics
-                const response = await fetch(`/api/player/stats?name=${player}`);
-                const data = await response.json();
+            if (!res.ok) { showToast(data.error || 'Something went wrong.'); return; }
 
-                if (!response.ok) {
-                    alert("Error: " + (data.error || "Something went wrong"));
-                    return;
-                }
+            document.getElementById('player-title').textContent = `${data.player} — Career Record`;
+            document.getElementById('total-goals').textContent = data.overall_stats.total_career_goals;
+            document.getElementById('non-penalty-goals').textContent = data.overall_stats.non_penalty_goals;
+            document.getElementById('penalty-goals').textContent = data.overall_stats.total_penalties;
+            document.getElementById('own-goals').textContent = data.overall_stats.total_own_goals;
 
-                // Populate the HTML DOM with the JSON data
-                document.getElementById('player-title').innerText = `${data.player} - Career Statistics`;
-                document.getElementById('total-goals').innerText = data.overall_stats.total_career_goals;
-                document.getElementById('penalty-goals').innerText = data.overall_stats.total_penalties;
-                document.getElementById('non-penalty-goals').innerText = data.overall_stats.non_penalty_goals;
-                document.getElementById('own-goals').innerText = data.overall_stats.total_own_goals;
+            const tbody = document.getElementById('teams-body');
+            tbody.innerHTML = '';
+            data.national_teams_played_for.forEach(t => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${t.scoring_team}</td>
+                    <td>${t.total_goals}</td>
+                    <td>${t.penalty_goals}</td>
+                    <td>${t.own_goals}</td>
+                `;
+                tbody.appendChild(row);
+            });
 
-                // Populate national teams breakdown table
-                const teamsBody = document.getElementById('teams-body');
-                teamsBody.innerHTML = ''; // Clear existing rows
-                
-                data.national_teams_played_for.forEach(team => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${team.scoring_team}</td>
-                        <td style="text-align: center;">${team.total_goals}</td>
-                        <td style="text-align: center;">${team.penalty_goals}</td>
-                        <td style="text-align: center;">${team.own_goals}</td>
-                    `;
-                    teamsBody.appendChild(row);
-                });
-
-                // Make the result box visible
-                resultBox.style.display = "block";
-
-            } catch (error) {
-                console.error("Fetch error:", error);
-                alert("Failed to connect to the server.");
-            }
+            resultBox.classList.add('visible');
+            showToast('Player data loaded!', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to connect to the server.');
+        } finally {
+            spinner.classList.remove('active');
         }
-    </script>
-</body>
-</html>
+    }
+
+    document.getElementById('player').addEventListener('keydown', e => {
+        if (e.key === 'Enter') fetchPlayerStats();
+    });
+</script>
+{% endblock %}

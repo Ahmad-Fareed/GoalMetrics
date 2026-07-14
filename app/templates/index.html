@@ -1,25 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>PitchMetrics | Home</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        .menu { display: flex; flex-direction: column; gap: 15px; max-width: 300px; margin: 0 auto; }
-        a.button { padding: 15px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
-        a.button:hover { background: #0056b3; }
-    </style>
-</head>
-<body>
-    <h1>Welcome to PitchMetrics</h1>
-    <p>Select an analytical tool below:</p>
-    
-    <div class="menu">
-        <!-- This link will point to our new View route -->
-        <a href="/compare" class="button">Team vs Team Head-to-Head</a>
-        <a href="/team" class="button">Team All-Tournament Stats</a>
-        <a href="/player" class="button">Player Career Stats</a>
-        <!-- We will add more buttons here later -->
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}GoalMetrics | Home{% endblock %}
+{% block nav_home %}navbar__link--active{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <span class="hero__badge">International Football Analytics</span>
+    <h1 class="hero__title">Explore the <span>Beautiful Game</span><br>Through Data</h1>
+    <p class="hero__subtitle">Compare national teams head-to-head, dive into tournament histories, and uncover player goalscoring records — all powered by real match data.</p>
+</section>
+
+<section class="features">
+    <a href="/compare" class="feature-card" id="feature-compare">
+        <div class="feature-card__icon feature-card__icon--compare">⚔️</div>
+        <h2 class="feature-card__title">Head-to-Head</h2>
+        <p class="feature-card__desc">Compare any two national teams and see their full historical record — wins, draws, and total matches played.</p>
+    </a>
+
+    <a href="/team" class="feature-card" id="feature-team">
+        <div class="feature-card__icon feature-card__icon--team">🏆</div>
+        <h2 class="feature-card__title">Team Stats</h2>
+        <p class="feature-card__desc">Explore a team's performance across every tournament in their history, complete with win rates and breakdowns.</p>
+    </a>
+
+    <a href="/player" class="feature-card" id="feature-player">
+        <div class="feature-card__icon feature-card__icon--player">🌟</div>
+        <h2 class="feature-card__title">Player Career</h2>
+        <p class="feature-card__desc">Look up any international goalscorer's career numbers — total goals, penalties, own goals, and team breakdowns.</p>
+    </a>
+</section>
+{% endblock %}

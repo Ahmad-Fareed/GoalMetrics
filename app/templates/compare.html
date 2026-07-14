@@ -1,85 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Compare Teams</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 50px; max-width: 600px; margin: 0 auto; }
-        input, button { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
-        #result-box { margin-top: 20px; padding: 15px; border: 1px solid #ccc; display: none; background: #f9f9f9; }
-        .nav-links { margin-bottom: 20px; }
-        .nav-links a { display: inline-block; margin-right: 15px; padding: 10px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
-        .nav-links a:hover { background: #0056b3; }
-        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; }
-    </style>
-</head>
-<body>
-    <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/team">Team Stats</a>
-        <a href="/player">Player Stats</a>
+{% extends "base.html" %}
+
+{% block title %}Compare Teams | GoalMetrics{% endblock %}
+{% block nav_compare %}navbar__link--active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">⚔️ Head-to-Head Comparison</h1>
+    <p class="page-header__subtitle">Enter two national teams to view their full historical rivalry.</p>
+</div>
+
+<div class="glass-card" id="compare-form-card">
+    <div class="form-group">
+        <label class="form-label" for="team1">Team 1</label>
+        <input class="form-input" type="text" id="team1" placeholder="e.g., Brazil">
     </div>
-    
-    <a href="/" class="back-link">← Back to Home</a>
-    <h2>Head-to-Head Comparison</h2>
-    
-    <div>
-        <label>Team 1:</label>
-        <input type="text" id="team1" placeholder="e.g., Brazil">
-        
-        <label>Team 2:</label>
-        <input type="text" id="team2" placeholder="e.g., Argentina">
-        
-        <button onclick="fetchComparison()">Get Stats</button>
+    <div class="form-group">
+        <label class="form-label" for="team2">Team 2</label>
+        <input class="form-input" type="text" id="team2" placeholder="e.g., Argentina">
     </div>
+    <button class="btn btn--primary" id="btn-compare" onclick="fetchComparison()">Compare Teams</button>
 
-    <div id="result-box">
-        <h3 id="matchup-title"></h3>
-        <p>Total Matches: <strong id="total-matches"></strong></p>
-        <p><span id="t1-name"></span> Wins: <strong id="t1-wins"></strong></p>
-        <p><span id="t2-name"></span> Wins: <strong id="t2-wins"></strong></p>
-        <p>Draws: <strong id="draws"></strong></p>
+    <div class="spinner" id="spinner"></div>
+
+    <!-- Results -->
+    <div class="result-container" id="result-box">
+        <hr class="section-divider">
+
+        <h2 class="section-title" id="matchup-title"></h2>
+
+        <div class="stat-row">
+            <div class="stat-card">
+                <div class="stat-card__value stat-card__value--accent" id="total-matches">0</div>
+                <div class="stat-card__label">Total Matches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value stat-card__value--emerald" id="t1-wins">0</div>
+                <div class="stat-card__label" id="t1-label">Team 1 Wins</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value stat-card__value--rose" id="t2-wins">0</div>
+                <div class="stat-card__label" id="t2-label">Team 2 Wins</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value stat-card__value--amber" id="draws">0</div>
+                <div class="stat-card__label">Draws</div>
+            </div>
+        </div>
+
+        <!-- Visual comparison bar -->
+        <div class="compare-bar-group">
+            <div class="compare-bar">
+                <div class="compare-bar__header">
+                    <span id="bar-t1-name">Team 1</span>
+                    <span id="bar-t2-name">Team 2</span>
+                </div>
+                <div class="compare-bar__track" id="compare-track">
+                    <div class="compare-bar__fill--left"  id="bar-t1" style="width:0%"></div>
+                    <div class="compare-bar__fill--draw"  id="bar-draw" style="width:0%"></div>
+                    <div class="compare-bar__fill--right" id="bar-t2" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-        // The AJAX Fetch API Logic
-        async function fetchComparison() {
-            const team1 = document.getElementById('team1').value;
-            const team2 = document.getElementById('team2').value;
-            const resultBox = document.getElementById('result-box');
+{% block scripts %}
+<script>
+    async function fetchComparison() {
+        const team1 = document.getElementById('team1').value.trim();
+        const team2 = document.getElementById('team2').value.trim();
+        const spinner = document.getElementById('spinner');
+        const resultBox = document.getElementById('result-box');
 
-            if (!team1 || !team2) {
-                alert("Please enter both teams.");
-                return;
-            }
+        if (!team1 || !team2) { showToast('Please enter both team names.'); return; }
 
-            try {
-                // Call the API endpoint we built in Phase 3
-                const response = await fetch(`/api/compare?team1=${team1}&team2=${team2}`);
-                const data = await response.json();
+        spinner.classList.add('active');
+        resultBox.classList.remove('visible');
 
-                if (!response.ok) {
-                    alert("Error: " + (data.error || "Something went wrong"));
-                    return;
-                }
+        try {
+            const res = await fetch(`/api/compare?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
+            const data = await res.json();
 
-                // Populate the HTML DOM with the JSON data
-                document.getElementById('matchup-title').innerText = `${data.team1} vs ${data.team2}`;
-                document.getElementById('total-matches').innerText = data.total_matches;
-                document.getElementById('t1-name').innerText = data.team1;
-                document.getElementById('t1-wins').innerText = data.team1_wins;
-                document.getElementById('t2-name').innerText = data.team2;
-                document.getElementById('t2-wins').innerText = data.team2_wins;
-                document.getElementById('draws').innerText = data.draws;
+            if (!res.ok) { showToast(data.error || 'Something went wrong.'); return; }
 
-                // Make the result box visible
-                resultBox.style.display = "block";
+            document.getElementById('matchup-title').textContent = `${data.team1} vs ${data.team2}`;
+            document.getElementById('total-matches').textContent = data.total_matches;
+            document.getElementById('t1-wins').textContent = data.team1_wins;
+            document.getElementById('t2-wins').textContent = data.team2_wins;
+            document.getElementById('draws').textContent = data.draws;
+            document.getElementById('t1-label').textContent = `${data.team1} Wins`;
+            document.getElementById('t2-label').textContent = `${data.team2} Wins`;
 
-            } catch (error) {
-                console.error("Fetch error:", error);
-                alert("Failed to connect to the server.");
-            }
+            // Visual bar
+            const total = data.total_matches || 1;
+            document.getElementById('bar-t1-name').textContent = data.team1;
+            document.getElementById('bar-t2-name').textContent = data.team2;
+            document.getElementById('bar-t1').style.width   = `${(data.team1_wins / total * 100).toFixed(1)}%`;
+            document.getElementById('bar-draw').style.width  = `${(data.draws / total * 100).toFixed(1)}%`;
+            document.getElementById('bar-t2').style.width    = `${(data.team2_wins / total * 100).toFixed(1)}%`;
+
+            resultBox.classList.add('visible');
+            showToast('Comparison loaded!', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to connect to the server.');
+        } finally {
+            spinner.classList.remove('active');
         }
-    </script>
-</body>
-</html>
+    }
+
+    // Allow Enter key to trigger search
+    document.querySelectorAll('#team1, #team2').forEach(el => {
+        el.addEventListener('keydown', e => { if (e.key === 'Enter') fetchComparison(); });
+    });
+</script>
+{% endblock %}

@@ -1,28 +1,46 @@
+"""Flask configuration classes loaded from environment variables."""
+
 import os
+
 from dotenv import load_dotenv
 
-# Explicitly load the .env file from the current directory
 basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(basedir, '.env'))
+load_dotenv(os.path.join(basedir, ".env"))
+
 
 class Config:
-    """Base configuration class that extracts variables from environment."""
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'default-fallback-key')
-    
-    # MySQL Database Configs
-    DB_HOST = os.environ.get('DB_HOST', 'localhost')
-    DB_USER = os.environ.get('DB_USER', 'root')
-    DB_PASSWORD = os.environ.get('DB_PASSWORD', 'root')
-    DB_NAME = os.environ.get('DB_NAME', 'goalmetric_db')
+    """Base configuration — shared across all environments."""
+
+    SECRET_KEY = os.environ.get("SECRET_KEY", "default-fallback-key")
+
+    # MySQL connection parameters
+    DB_HOST = os.environ.get("DB_HOST", "localhost")
+    DB_USER = os.environ.get("DB_USER", "root")
+    DB_PASSWORD = os.environ.get("DB_PASSWORD", "root")
+    DB_NAME = os.environ.get("DB_NAME", "goalmetric_db")
+
 
 class DevelopmentConfig(Config):
+    """Development-specific overrides."""
+
     DEBUG = True
 
+
+class TestingConfig(Config):
+    """Testing-specific overrides."""
+
+    TESTING = True
+    DEBUG = True
+
+
 class ProductionConfig(Config):
+    """Production-specific overrides."""
+
     DEBUG = False
 
-# Dictionary map to easily toggle environments inside the factory pattern
+
 config_by_name = {
-    'development': DevelopmentConfig,
-    'production': ProductionConfig
+    "development": DevelopmentConfig,
+    "testing": TestingConfig,
+    "production": ProductionConfig,
 }
