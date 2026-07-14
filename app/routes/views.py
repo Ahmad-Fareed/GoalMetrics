@@ -17,3 +17,8 @@ def compare_page():
 def team_page():
     """Serves the team.html page."""
     return render_template('team.html')
+
+@views_bp.route('/player')
+def player_page():
+    """Serves the player.html page."""
+    return render_template('player.html')

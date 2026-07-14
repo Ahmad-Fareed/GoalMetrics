@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from config import config_by_name
-
+from app.routes.player import player_bp
 # IMPORT the database initialization function we just wrote
 from .db import init_db_pool
 
@@ -27,6 +27,7 @@ def create_app(config_name='development'):
     app.register_blueprint(compare_bp)
     app.register_blueprint(views_bp)
     app.register_blueprint(team_bp)
+    app.register_blueprint(player_bp)
     # Temporary Base Health-Check Route
     @app.route('/api/health', methods=['GET'])
     def health_check():
